@@ -134,14 +134,22 @@ Output: Logits [batch_size, 2]
 - **Batch size**: 32
 - **Optimizer**: Adam (lr=1e-3)
 - **Loss**: Cross Entropy Loss
-- **Độ chính xác**: **100%** trên validation set
+- **Dataset**: 490 train + 123 val
+- **Positive samples**: 423
+- **Negative samples**: 190
 
 #### Hiệu suất
 ```
-Epoch 1: Accuracy = 100%
-Epoch 2: Accuracy = 100%
-Epoch 3: Accuracy = 100%
-```
+Epoch 1: val acc=0.293
+Epoch 2: val acc=0.496
+Epoch 3: val acc=0.959
+Epoch 4: val acc=0.919
+Epoch 5: val acc=0.943
+Epoch 6: val acc=0.967
+Epoch 7: val acc=0.959
+Epoch 8: val acc=0.984
+Epoch 9: val acc=0.984
+Epoch 10: val acc=0.967
 
 ---
 
