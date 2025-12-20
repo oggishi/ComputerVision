@@ -130,7 +130,7 @@ Output: Logits [batch_size, 2]
 
 #### Thông số
 - **Số tham số**: ~11.2M
-- **Epoch**: 3
+- **Epoch**: 10
 - **Batch size**: 32
 - **Optimizer**: Adam (lr=1e-3)
 - **Loss**: Cross Entropy Loss
