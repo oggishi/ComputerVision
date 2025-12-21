@@ -1,4 +1,4 @@
-# 📚 TÀI LIỆU DỰ ÁN - PHÁT HIỆN NGƯỜI ĐI BỘ BẰNG DEEP LEARNING
+# PHÁT HIỆN NGƯỜI ĐI BỘ BẰNG DEEP LEARNING
 
 ## 📋 MỤC LỤC
 1. [Giới thiệu dự án](#giới-thiệu-dự-án)
@@ -19,18 +19,18 @@ Dự án này phát triển **5 mô hình Deep Learning khác nhau** để giả
 
 ### Phạm vi
 - **Bài toán chính**: Phát hiện vị trí người trong ảnh
-- **Bài toán phụ**: Phân loại crops, tái tạo ảnh, tạo ảnh tổng hợp
+- **Bài toán phụ**: Phân loại crops, tái tạo ảnh, tạo ảnh 
 - **Dataset**: Penn-Fudan Pedestrian Dataset (124 ảnh huấn luyện)
 - **Framework**: PyTorch + TorchVision
 
 ### Tổng quan 5 mô hình
 | Mô hình | Nhiệm vụ | Đầu vào | Đầu ra | Loại học |
 |---------|----------|---------|--------|----------|
-| CNN (ResNet18) | Phân loại | Ảnh 64×64 | Nhãn lớp | Supervised |
-| Faster R-CNN | Phát hiện | Ảnh gốc | Bounding box | Supervised |
-| Mask R-CNN | Phân khúc | Ảnh gốc | Mặt nạ + box | Supervised |
-| AutoEncoder | Tái tạo | Ảnh 64×64 | Ảnh tái tạo | Unsupervised |
-| GAN (DCGAN) | Tạo ảnh | Noise ngẫu nhiên | Ảnh tổng hợp | Unsupervised |
+| CNN (ResNet18) | Phân loại từng crop (người vs nền) | Ảnh 64×64 | Nhãn lớp (0: nền, 1: người) | Supervised |
+| Faster R-CNN | Phát hiện vị trí & vẽ bounding box | Ảnh gốc 384×288 | Tọa độ bbox + độ tin cậy | Supervised |
+| Mask R-CNN | Phân khúc từng người thành mặt nạ pixel | Ảnh gốc 384×288 | Mặt nạ nhị phân + bbox cho mỗi người | Supervised |
+| AutoEncoder | Tái tạo ảnh (nén & giải nén đặc trưng) | Ảnh 64×64 | Ảnh tái tạo 64×64 | Unsupervised |
+| GAN (DCGAN) | Tạo ảnh người giả mạo từ latent vector | Noise ngẫu nhiên (100 chiều) | Ảnh tổng hợp 64×64 giống người thật | Unsupervised |
 
 ---
 
@@ -59,12 +59,12 @@ PennFudanPed/
 ### Thông tin chi tiết
 - **Tổng ảnh gốc**: 124 ảnh (74 từ Fudan, 50 từ Penn)
 - **Kích thước ảnh**: 384×288 pixels
-- **Số lượng người**: ~1000 người
-- **Trung bình/ảnh**: ~8 người
+- **Số lượng người**: ~345 người
+- **Trung bình/ảnh**: ~2 người
 - **Mặt nạ**: Mỗi ảnh có 1 file `_mask.png` với ID cho mỗi người
 - **Phân chia dữ liệu**:
-  - Huấn luyện: 80% (99 ảnh)
-  - Xác nhận: 20% (25 ảnh)
+  - Train: 80% (99 ảnh)
+  - Test: 20% (25 ảnh)
 
 ### Tiền xử lý dữ liệu
 
@@ -108,13 +108,13 @@ Kết quả: ~2000 ảnh cắt để dùng cho CNN/AE/GAN
 
 ---
 
-## 🧠 5 Mô Hình Deep Learning
+##  5 Mô Hình Deep Learning
 
 ### 1️⃣ CNN - ResNet18 (Phân Loại)
 
 #### Mục đích
 - **Phân loại ảnh 64×64**: Có phải người hay không?
-- Validate các detect region từ detector
+
 - Đầu ra: 2 lớp (person=1, non-person=0)
 
 #### Kiến trúc
@@ -152,7 +152,7 @@ Epoch 9: val acc=0.984
 Epoch 10: val acc=0.967
 
 ---
-
+```
 ### 2️⃣ Faster R-CNN (Phát Hiện)
 
 #### Mục đích
@@ -192,14 +192,29 @@ Output:
 - **Optimizer**: SGD (lr=0.005, momentum=0.9)
 - **Loss**: RPN loss + Classification loss + Box regression loss
 
-#### Custom Modification
-```python
-# Thay thế box predictor cho 2 classes
-in_features = det_model.roi_heads.box_predictor.cls_score.in_features
-det_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)
+#### Hiệu suất
 ```
 
----
+Epoch 1/6: 100%|██████████| 68/68 [00:36<00:00,  1.86it/s, loss=0.1450]
+✅ Epoch 1/6 completed in 36.5s | Avg Loss: 17.6114
+
+Epoch 2/6: 100%|██████████| 68/68 [00:36<00:00,  1.84it/s, loss=0.1660]
+✅ Epoch 2/6 completed in 37.0s | Avg Loss: 7.6883
+
+Epoch 3/6: 100%|██████████| 68/68 [00:37<00:00,  1.82it/s, loss=0.1037]
+✅ Epoch 3/6 completed in 37.3s | Avg Loss: 6.5595
+
+Epoch 4/6: 100%|██████████| 68/68 [00:38<00:00,  1.79it/s, loss=0.1058]
+✅ Epoch 4/6 completed in 38.1s | Avg Loss: 5.8970
+
+Epoch 5/6: 100%|██████████| 68/68 [00:39<00:00,  1.72it/s, loss=0.0557]
+✅ Epoch 5/6 completed in 39.6s | Avg Loss: 4.3591
+
+Epoch 6/6: 100%|██████████| 68/68 [00:40<00:00,  1.70it/s, loss=0.0483]
+✅ Epoch 6/6 completed in 40.0s | Avg Loss: 3.8907
+```
+
+
 
 ### 3️⃣ Mask R-CNN (Phân Khúc)
 
@@ -239,19 +254,29 @@ Output:
 #### Thông số
 - **Số tham số**: ~44.2M
 - **Mask Head**: 256 channels, FCN architecture
-- **Epoch**: 2
+- **Epoch**: 6
 - **Batch size**: 2
 - **Optimizer**: SGD (momentum=0.9)
 
-#### Custom Modification
-```python
-# Thay thế mask predictor cho 2 classes
-in_features_mask = seg_model.roi_heads.mask_predictor.conv5_mask.in_channels
-seg_model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask, 256, 2)
+#### Hiệu suất
+Epoch 1/6: 100%|██████████| 68/68 [00:42<00:00,  1.61it/s, loss=0.3493]
+✅ Epoch 1/6 completed in 42.3s | Avg Loss: 46.6854
 
-# Cũng thay thế box predictor
-seg_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, 2)
-```
+Epoch 2/6: 100%|██████████| 68/68 [00:43<00:00,  1.57it/s, loss=0.2328]
+✅ Epoch 2/6 completed in 43.2s | Avg Loss: 21.0259
+
+Epoch 3/6: 100%|██████████| 68/68 [00:43<00:00,  1.55it/s, loss=0.2123]
+✅ Epoch 3/6 completed in 43.9s | Avg Loss: 15.8942
+
+Epoch 4/6: 100%|██████████| 68/68 [00:43<00:00,  1.56it/s, loss=0.1667]
+✅ Epoch 4/6 completed in 43.7s | Avg Loss: 14.0750
+
+Epoch 5/6: 100%|██████████| 68/68 [00:43<00:00,  1.55it/s, loss=0.2101]
+✅ Epoch 5/6 completed in 44.0s | Avg Loss: 12.2623
+
+Epoch 6/6: 100%|██████████| 68/68 [00:44<00:00,  1.53it/s, loss=0.1160]
+✅ Epoch 6/6 completed in 44.6s | Avg Loss: 11.3528
+
 
 #### Khác biệt so với Faster R-CNN
 | Tiêu chí | Faster R-CNN | Mask R-CNN |
@@ -293,19 +318,20 @@ Output (3×64×64) - Ảnh tái tạo
 #### Thông số
 - **Số tham số**: ~2.1M (rất nhẹ)
 - **Dimension**: 3×64×64 → 128×8×8 (compression ratio: ~150x)
-- **Epoch**: 3
+- **Epoch**: 30
 - **Batch size**: 64
 - **Optimizer**: Adam (lr=1e-3)
 - **Loss**: MSE (Mean Squared Error)
 
 #### Kết quả
 ```
-Epoch 1: MSE = ~0.0450
-Epoch 2: MSE = ~0.0350
-Epoch 3: MSE = ~0.0293 (tốt!)
-
-Average MSE Error: 0.0293
-MSE Range: [0.0245, 0.0369]
+poch  1/30: L1 Loss=0.1251 | Best=0.1251
+Epoch  5/30: L1 Loss=0.0426 | Best=0.0426
+Epoch 10/30: L1 Loss=0.0328 | Best=0.0328
+Epoch 15/30: L1 Loss=0.0314 | Best=0.0310
+Epoch 20/30: L1 Loss=0.0300 | Best=0.0276
+Epoch 25/30: L1 Loss=0.0304 | Best=0.0274
+Epoch 30/30: L1 Loss=0.0254 | Best=0.0245
 ```
 
 #### Ứng dụng
@@ -349,40 +375,12 @@ Conv2d(256, 1, kernel=4, stride=1, pad=0)                                → 1×
 Output: Logit (điểm thực/giả)
 ```
 
-#### Training Loop
-```python
-# Cải thiện Discriminator
-for batch in dataloader:
-    real_images = batch.to(device)
-    
-    # Forward real
-    d_real = disc(real_images)  # → ~1 (thực)
-    
-    # Generate fake
-    z = torch.randn(batch_size, 64, 1, 1, device=device)
-    fake_images = gen(z).detach()
-    d_fake = disc(fake_images)  # → ~0 (giả)
-    
-    # Loss: discriminator học phân biệt
-    loss_D = BCE(d_real, ones) + BCE(d_fake, zeros)
-    disc.backward()
-
-# Cải thiện Generator
-for batch in dataloader:
-    z = torch.randn(batch_size, 64, 1, 1, device=device)
-    fake_images = gen(z)
-    d_fake = disc(fake_images)
-    
-    # Loss: generator học lừa discriminator
-    loss_G = BCE(d_fake, ones)  # Muốn d_fake → ~1
-    gen.backward()
-```
 
 #### Thông số
 - **Generator param**: ~1.7M
 - **Discriminator param**: ~1.8M
 - **Latent dimension (nz)**: 64
-- **Epoch**: 3
+- **Epoch**: 100
 - **Batch size**: 64
 - **Optimizer**:
   - Generator: Adam (lr=2e-4, beta1=0.5)
@@ -391,11 +389,26 @@ for batch in dataloader:
 
 #### Kết quả Huấn Luyện
 ```
-DCGAN epoch 1: D=0.690, G=0.692
-DCGAN epoch 2: D=0.689, G=0.708
-DCGAN epoch 3: D=0.688, G=0.715
+Epoch   1/100: D Loss=-42.6121 | G Loss=32.3636 | GP=0.2006
+Epoch   5/100: D Loss=-82.3951 | G Loss=106.1968 | GP=24.9636
+Epoch  10/100: D Loss=-66.7601 | G Loss=79.8856 | GP=22.8528
+Epoch  15/100: D Loss=-60.7648 | G Loss=65.7075 | GP=23.0156
+Epoch  20/100: D Loss=-58.8079 | G Loss=62.4049 | GP=21.8783
+Epoch  25/100: D Loss=-47.9745 | G Loss=33.5453 | GP=16.7308
+Epoch  30/100: D Loss=-43.2105 | G Loss=24.1113 | GP=14.5866
+Epoch  35/100: D Loss=-42.3529 | G Loss=3.6158 | GP=13.5290
+Epoch  40/100: D Loss=-40.2293 | G Loss=-7.4197 | GP=13.2516
+Epoch  45/100: D Loss=-35.9524 | G Loss=-9.3946 | GP=12.0025
+Epoch  50/100: D Loss=-33.0638 | G Loss=-7.7295 | GP=9.6321
+Epoch  55/100: D Loss=-31.4066 | G Loss=8.2952 | GP=9.7162
+Epoch  60/100: D Loss=-29.4300 | G Loss=-0.5442 | GP=9.1760
+Epoch  65/100: D Loss=-28.4854 | G Loss=-6.4294 | GP=8.4540
+Epoch  70/100: D Loss=-25.3650 | G Loss=-13.6383 | GP=7.0295
+Epoch  75/100: D Loss=-25.7261 | G Loss=-21.2284 | GP=7.1632
+...
+Epoch  95/100: D Loss=-23.0451 | G Loss=-19.4365 | GP=5.5377
+Epoch 100/100: D Loss=-22.6645 | G Loss=-19.0220 | GP=5.3548
 
-→ Cân bằng tốt giữa D và G
 ```
 
 #### Ứng dụng
@@ -749,30 +762,6 @@ print(os.listdir(root))
 
 ---
 
-## 📈 Kết Luận
-
-### Điểm Mạnh
-✅ **Đa dạng mô hình**: Từ supervised đến unsupervised  
-✅ **Kiến trúc hiện đại**: ResNet, FPN, Mask R-CNN  
-✅ **Kết quả tốt**: 100% accuracy CNN, realistic GAN samples  
-✅ **Đầy đủ visualization**: 8 file PNG chi tiết  
-✅ **Dễ mở rộng**: Có thể thêm detection, tracking, etc.
-
-### Hạn Chế
-⚠️ Dataset nhỏ (124 ảnh) → có thể overfit  
-⚠️ Chỉ 2-3 epochs → có thể huấn luyện thêm  
-⚠️ Không có temporal tracking → kế tiếp  
-⚠️ GAN vẫn trong giai đoạn cơ bản
-
-### Mở Rộng Tiếp Theo
-🔄 **Video processing**: Theo dõi người qua frame  
-🔄 **Multi-task learning**: Kết hợp các task  
-🔄 **3D detection**: Từ stereo/depth cameras  
-🔄 **Edge deployment**: Chạy trên embedded devices  
-🔄 **Transfer learning**: Fine-tune trên dataset khác
-
----
-
 ## 📚 Tài Liệu Tham Khảo
 
 1. **Penn-Fudan Dataset**: http://www.cis.upenn.edu/~jshi/ped_html/
@@ -781,21 +770,3 @@ print(os.listdir(root))
 4. **ResNet**: He et al., CVPR 2016
 5. **GAN**: Goodfellow et al., NIPS 2014
 6. **PyTorch Documentation**: https://pytorch.org/
-
----
-
-**Tác giả**: AI Assistant  
-**Ngày**: 18/12/2025  
-**Phiên bản**: 1.0  
-
----
-
-## 📞 Liên Hệ & Hỗ Trợ
-
-Nếu có câu hỏi hoặc cần hỗ trợ:
-- Kiểm tra lại đường dẫn dataset
-- Cập nhật PyTorch/CUDA versions
-- Chạy từng cell một để debug
-- Kiểm tra GPU availability: `torch.cuda.is_available()`
-
-**Happy Learning! 🚀**
